@@ -120,7 +120,7 @@ public class SandboxTestRunner extends BlockJUnit4ClassRunner {
   @NotNull
   protected Sandbox getSandbox(FrameworkMethod method) {
     InstrumentationConfiguration instrumentationConfiguration = createClassLoaderConfig(method);
-    ClassLoader sandboxClassLoader = new SandboxClassLoader(instrumentationConfiguration);
+    ClassLoader sandboxClassLoader = new SandboxClassLoader(instrumentationConfiguration, null); // todo fix
     Sandbox sandbox = new Sandbox(sandboxClassLoader);
     configureShadows(method, sandbox);
     return sandbox;

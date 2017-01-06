@@ -1,11 +1,15 @@
 package org.robolectric.internal;
 
+import org.jetbrains.annotations.NotNull;
+import org.robolectric.TestLifecycle;
 import org.robolectric.internal.bytecode.InstrumentationConfiguration;
+import org.robolectric.internal.bytecode.RobolectricInternals;
 import org.robolectric.internal.bytecode.SandboxClassLoader;
 import org.robolectric.internal.dependency.DependencyResolver;
 import org.robolectric.util.Pair;
 
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -28,18 +32,46 @@ public class SandboxFactory {
     }
   };
 
-  public synchronized SdkEnvironment getSdkEnvironment(InstrumentationConfiguration instrumentationConfig, DependencyResolver dependencyResolver, SdkConfig sdkConfig) {
+  public synchronized SdkEnvironment getSdkEnvironment(final InstrumentationConfiguration instrumentationConfig, DependencyResolver dependencyResolver, SdkConfig sdkConfig) {
     Pair<InstrumentationConfiguration, SdkConfig> key = Pair.create(instrumentationConfig, sdkConfig);
 
     SdkEnvironment sdkEnvironment = sdkToEnvironment.get(key);
     if (sdkEnvironment == null) {
       URL url = dependencyResolver.getLocalArtifactUrl(sdkConfig.getAndroidSdkDependency());
 
-      ClassLoader robolectricClassLoader = new SandboxClassLoader(instrumentationConfig, url);
+      ClassLoader robolectricClassLoader = createClassLoader(instrumentationConfig, url);
       sdkEnvironment = new SdkEnvironment(sdkConfig, robolectricClassLoader);
 
       sdkToEnvironment.put(key, sdkEnvironment);
     }
     return sdkEnvironment;
+  }
+
+  @NotNull
+  public ClassLoader createClassLoader(InstrumentationConfiguration instrumentationConfig, URL... urls) {
+    URLClassLoader systemClassLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+    ClassLoader parent = new ParentClassLoader(systemClassLoader, instrumentationConfig);
+    return new SandboxClassLoader(instrumentationConfig, parent, urls);
+  }
+
+  private static class ParentClassLoader extends URLClassLoader {
+    private final InstrumentationConfiguration instrumentationConfig;
+    private final URLClassLoader originalClassLoader;
+
+    public ParentClassLoader(URLClassLoader systemClassLoader, InstrumentationConfiguration instrumentationConfig) {
+      super(systemClassLoader.getURLs(), systemClassLoader.getParent());
+      this.originalClassLoader = systemClassLoader;
+      this.instrumentationConfig = instrumentationConfig;
+    }
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+      boolean fromParent = !instrumentationConfig.shouldAcquire(name);
+      if (fromParent) {
+        return originalClassLoader.loadClass(name);
+      } else {
+        throw new ClassNotFoundException(name);
+      }
+    }
   }
 }
