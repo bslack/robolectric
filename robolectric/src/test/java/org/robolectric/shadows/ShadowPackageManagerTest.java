@@ -10,10 +10,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import com.google.common.base.Function;
-import com.google.common.collect.Lists;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,16 +21,10 @@ import org.robolectric.Robolectric;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.TestRunners;
 import org.robolectric.annotation.Config;
-import org.robolectric.manifest.AndroidManifest;
-import org.robolectric.res.DefaultPackageManagerTest;
-import org.robolectric.res.Fs;
 import org.robolectric.test.TemporaryFolder;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import static android.content.pm.PackageManager.VERIFICATION_ALLOW;
@@ -716,7 +707,7 @@ public class ShadowPackageManagerTest {
   @Test
   @Config(manifest = "src/test/resources/TestAndroidManifest.xml")
   public void getActivityMetaData() throws Exception {
-    Activity activity = setupActivity(DefaultPackageManagerTest.ActivityWithMetadata.class);
+    Activity activity = setupActivity(ShadowPackageManagerTest.ActivityWithMetadata.class);
 
     ActivityInfo activityInfo = packageManager.getActivityInfo(activity.getComponentName(), PackageManager.GET_ACTIVITIES|PackageManager.GET_META_DATA);
     assertThat(activityInfo.metaData.get("someName")).isEqualTo("someValue");

@@ -860,7 +860,7 @@ public class DefaultPackageManager extends StubPackageManager implements Robolec
     this.appResourceTable = appResourceTable;
   }
 
-  static class IntentComparator implements Comparator<Intent> {
+  public static class IntentComparator implements Comparator<Intent> {
 
     @Override
     public int compare(Intent i1, Intent i2) {
